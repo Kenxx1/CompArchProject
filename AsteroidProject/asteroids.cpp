@@ -222,14 +222,16 @@ int main(int argc, char *argv[]){
     int seed = stoi(argv[5]);
     cout << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(1) << pos_ray << " " << seed << endl;
     
+    
     //cout initial conditions inputed by the user
-    string initStr = to_string(num_asteroids) + " " + to_string(num_iterations) + " " + to_string(num_planets) + " " + to_string(pos_ray) + " " + to_string(seed);
+    
     //cout << initStr << endl;
     
     ofstream initFile;
     initFile.open ("init_conf.txt");
-    initFile << initStr << endl;
-    initFile.close();
+    
+    initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(1) << pos_ray << " " << seed << endl;
+    
     
     Asteroids * astArray = new Asteroids[num_asteroids];
     Planets * planetArray = new Planets[num_planets];
@@ -286,13 +288,18 @@ int main(int argc, char *argv[]){
     //print statements for asteroids and planets
     for (int i = 0; i < num_asteroids; i++){
         cout << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
+        initFile << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
     }
     
     for (int i = 0; i < num_planets; i++){
         cout << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
+        initFile << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
     }
     //print laser beam location
     cout << "0.000 " << pos_ray << endl;
+    initFile << "0.000 " << pos_ray << endl;
+    
+    initFile.close();
     
     for (int t = 0; t < num_iterations; t++){
         
@@ -351,8 +358,6 @@ int main(int argc, char *argv[]){
                 astArray[i].ypos = height -2;
                 astArray[i].yvel = astArray[i].yvel * -1;
             }
-            
-            
         }
         //CODE FOR DELETING ASTEROIDS
         /*
@@ -378,18 +383,22 @@ int main(int argc, char *argv[]){
         
     }
     
+    ofstream outFile;
+    outFile.open ("out.txt");
+    
     for (int v = 0; v < num_asteroids; v++){
-        cout << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
         
-        /*
-         if (astArray[v].blownUp == true){
-         cout << "Asteroid " << (v+1) << " was blown up" << endl;
-         }
-         */
+        //string outStr = to_string(astArray[v].xpos) + " " + to_string(astArray[v].ypos) + " ";
+        
+        outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        
+        //outFile << outStr << endl;
     }
+    
+    outFile.close();
+
+    
 }
-
-
 
 //Quick idea--> for the signs to be correct, if the x/y value of the opposing asteroid or planet is less than the other, then it should be negative and visa versa TOok care of this.
 
