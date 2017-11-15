@@ -19,7 +19,7 @@ int dmin = 2;
 int width = 200;
 int height = 200;
 int ray_width = 4;
-double gravC = pow(6.67408, -11);
+double gravC = pow(6.674, -5);
 int m = 1000;
 int sdm = 50;
 
@@ -35,15 +35,8 @@ struct Asteroids{
     double fx;
     double fy;
     
-    Asteroids(){};
+    bool blownUp;
     
-    Asteroids(double xpos, double ypos, double mass){
-        xpos = xpos;
-        ypos = ypos;
-        mass = mass;
-        xvel = 0;
-        yvel = 0;
-    }
     
 };
 
@@ -52,18 +45,9 @@ struct Planets{
     double ypos;
     double mass;
     
-    Planets(){};
-    
-    Planets(double xpos, double ypos, double mass){
-        xpos = xpos;
-        ypos = ypos;
-        mass = mass;
-        
-    }
-    
 };
 
-void forceCalc(int temp, int oppose, Asteroids *astArray, Planets *planetArray){
+void forceCalcA(int temp, int oppose, Asteroids *astArray){
     //calculate attractive force between the two and how much it'll cause it to move --> using formulas
     //distance between
     
@@ -77,33 +61,145 @@ void forceCalc(int temp, int oppose, Asteroids *astArray, Planets *planetArray){
     
     double dist = sqrt(pow((tempX - opposeX), 2) + pow((tempY - opposeY), 2));
     double angle;
+    double slope;
     
-    cout << "Dist: " << dist << endl;
+    //cout << "Distance between " << (temp + 1) << " and " << (oppose + 1) << " = " <<  dist << endl;
     
-    if (dist > 2 ){
-        double slope = (tempY - opposeY) / (tempX - opposeX);
-        cout << "slope: " << slope << endl;
+    if (dist > 2){
+        slope = (opposeY - tempY) / (opposeX - tempX);
+        //cout << "slope: " << slope << endl;
+        //cout << " ANGLE BEFORE TRUNCATION: " << atan(slope) << " radians " << endl;
         
         if (slope > 1 || slope < -1){
-            slope = slope - trunc(slope);
-            cout << "truncated -> new slope: " << slope << endl;
+            
+            //cout << "SLOPE TRUNC # is " << trunc(slope) << endl;
+            
+            slope = slope - trunc(slope);  //UNCOMMENT THIS TO HAVE THE SLOPE TRUNCATED
+            
+            //cout << "truncated -> new slope: " << slope << endl;
         }
-        angle = atan(slope);
-        cout << "angle calculated is " << angle << " radians." << endl;
     }
+    else{
+        astArray[temp].fx = 0;
+        astArray[temp].fy = 0;
+        return;
+    }
+    angle = atan(slope);
+    //cout << "angle calculated is " << angle << " radians." << endl;
+    
     
     //double fx =
     double fx = ((gravC * tempM * opposeM) / dist) * cos(angle);
-    cout << fixed << setprecision(12) << fx << endl;
+    
+    //cout << fixed << setprecision(12) << fx << endl;
     
     double fy = ((gravC * tempM * opposeM) / dist) * sin(angle);
     
+    if (tempX < opposeX){// then the force should be positive
+        if (fx < 0){
+            fx = fx * -1;
+            //cout << "flag1" << endl;
+        }
+    }
+    if (tempX > opposeX){ // force should be negative
+        if (fx > 0){
+            fx = fx * -1;
+            //cout << "flag2" << endl;
+        }
+        
+    }
+    if (tempY < opposeY){ //force should be positive
+        if (fy < 0){
+            fy = fy * -1;
+        }
+    }
+    
+    if (tempY > opposeY){ // force should be negative
+        if (fy > 0){
+            fy = fy * -1;
+        }
+    }
+    
     astArray[temp].fx = fx;
     astArray[temp].fy = fy;
-    
-    
 }
 
+void forceCalcP(int a, int p, Asteroids *astArray, Planets *planetArray){ //force calculator for force between planet and asteroid
+    
+    double astX = astArray[a].xpos;
+    double astY = astArray[a].ypos;
+    double planetX = planetArray[p].xpos;
+    double planetY = planetArray[p].ypos;
+    double astM = astArray[a].mass;
+    double planetM = planetArray[p].mass;
+    double angle;
+    double slope = 0;
+    
+    double dist = sqrt(pow((astX - planetX), 2) + pow((astY - planetY), 2));
+    
+    if (dist > 2){
+        double slope = (astX - planetX) / (astY - planetY);
+        
+        if (slope > 1 || slope < -1){
+            slope = slope - trunc(slope); //UNCOMMENT THIS TO HAVE THE SLOPE BE TRUNCATED
+            
+        }
+        
+    }
+    else{
+        astArray[a].fx = 0;
+        astArray[a].fy = 0;
+        return;
+    }
+    
+    angle = atan(slope);
+    double fx = ((gravC * planetM * astM) / dist) * cos(angle);
+    double fy = ((gravC * planetM * astM) / dist) * sin(angle);
+    
+    if (astX < planetX){// then the force should be positive
+        if (fx < 0){
+            fx = fx * -1;
+            //cout << "flag1" << endl;
+        }
+    }
+    if (astX > planetX){ // force should be negative
+        if (fx > 0){
+            fx = fx * -1;
+            //cout << "flag2" << endl;
+        }
+        
+    }
+    if (astY < planetY){ //force should be positive
+        if (fy < 0){
+            fy = fy * -1;
+            //cout << "flag3" << endl;
+        }
+    }
+    
+    if (astY > planetY){ // force should be negative
+        if (fy > 0){
+            fy = fy * -1;
+            //cout << "flag4" << endl;
+        }
+    }
+    
+    astArray[a].fx = fx;
+    astArray[a].fy = fy;
+}
+
+void movement(int index, double sumFX, double sumFY, Asteroids *astArray){
+    //this will be calculating the acceleration AT EACH POINT IN TIME
+    double accelX = sumFX / astArray[index].mass;
+    //cout << "accelX = " << accelX << endl;
+    double accelY = sumFY / astArray[index].mass;
+    
+    astArray[index].xvel = astArray[index].xvel + accelX * dt;
+    astArray[index].yvel = astArray[index].yvel + accelY * dt;
+    
+    astArray[index].xpos = astArray[index].xpos + astArray[index].xvel * dt;
+    astArray[index].ypos = astArray[index].ypos + astArray[index].yvel * dt;
+    
+}
 
 int main(int argc, char *argv[]){
     
@@ -137,7 +233,7 @@ int main(int argc, char *argv[]){
     
     Asteroids * astArray = new Asteroids[num_asteroids];
     Planets * planetArray = new Planets[num_planets];
-
+    
     
     //random distributions
     default_random_engine re(seed);
@@ -155,6 +251,9 @@ int main(int argc, char *argv[]){
         astArray[i].xpos = xdist(re);
         astArray[i].ypos = ydist(re);
         astArray[i].mass = mdist(re);
+        astArray[i].xvel = 0;
+        astArray[i].yvel = 0;
+        astArray[i].blownUp = false;
     }
     
     for (int i = 0; i < num_planets; i++){
@@ -195,78 +294,104 @@ int main(int argc, char *argv[]){
     //print laser beam location
     cout << "0.000 " << pos_ray << endl;
     
-    
-    /*
-    
-    for (int i = 0; i < width; i++){
+    for (int t = 0; t < num_iterations; t++){
         
-        for (int v = 0; v < height; v++){
+        //cout << endl << "time step #" << (t+1) << endl;
+        
+        //calculate in each time stamp
+        for (int i = 0; i < num_asteroids; i++){
+            //cout << endl << "Asteroid at " << (i+1) << endl;
+            double fx = 0;
+            double fy = 0;
             
-            cout << "O";
-        }
-        cout << endl;
-    }*/
-    
-    /*
-    cout << fixed << setprecision(3);
-    
-    default_random_engine re(seed);
-    uniform_real_distribution<double> horiz(0, width);
-    uniform_real_distribution<double> vertic(0, height);
-    
-    double rando = horiz(re);
-    
-    cout << "RANDoM NUMBER IS: " << rando << endl;
-     */
-    
-    vector <double> xForces;
-    vector <double> yForces;
-    
-    for (int i = 0; i < num_asteroids; i++){
-        cout << endl << "Asteroid at " << i << endl;
-        
-        
-        for (int j = 0; j < num_asteroids; j++){
-            
-            if (i != j){
-                forceCalc(i, j, astArray, planetArray);
+            for (int j = 0; j < num_asteroids; j++){
                 
-                cout << fixed << setprecision(12) << astArray[i].fx << endl;
-                xForces.push_back(astArray[i].fx);
-                yForces.push_back(astArray[i].fy);
+                if (i != j){
+                    forceCalcA(i, j, astArray);
+                    
+                    fx = fx + astArray[i].fx;
+                    fy = fy + astArray[i].fy;
+                    
+                    //cout << fixed << setprecision(8) << "Force between asteroids " << (i+1) << " and " << (j+1) << " : fx = " << astArray[i].fx << " , fy = " << astArray[i].fy << endl;
+                }
             }
+            
+            for (int k = 0; k < num_planets; k++){
+                //calaculate attractive force between asteroid [i] and planet in question --> using formulas
+                forceCalcP(i, k, astArray, planetArray);
+                
+                //cout << fixed << setprecision(8) << "Force between asteroid " << (i+1) << " and planet " << (k+1) << " : fx = " << astArray[i].fx << " , fy = " << astArray[i].fy << endl;
+                
+                fx = fx + astArray[i].fx;
+                fy = fy + astArray[i].fy;
+            }
+            
+            //cout << "Sum X forces: " << fx << " :: Sum Y forces: " << fy << endl;
+            movement(i, fx, fy, astArray);
+            
+            //check if asteroid is within the Laser ray's path NOTE -----> it will make a difference when you delete the asteroid. since without its existence it won't act on the other ones.
+            
+            //rebound effect
+            if (astArray[i].xpos <= 0){ // flip x velocity and set xpos = 2
+                astArray[i].xpos = 2;
+                astArray[i].xvel = astArray[i].xvel * -1;
+            }
+            
+            if (astArray[i].xpos >= width){ // flip x velocity and set xpos = width - 2
+                astArray[i].xpos = width - 2;
+                astArray[i].xvel = astArray[i].xvel * -1;
+            }
+            
+            if (astArray[i].ypos <= 0){ // flip y velocity and set ypos = 0
+                astArray[i].ypos = 2;
+                astArray[i].yvel = astArray[i].yvel * -1;
+            }
+            
+            if (astArray[i].ypos >= height){
+                astArray[i].ypos = height -2;
+                astArray[i].yvel = astArray[i].yvel * -1;
+            }
+            
+            
         }
+        //CODE FOR DELETING ASTEROIDS
+        /*
+         for (int l = 0; l < num_asteroids; l++){
+         if (astArray[l].ypos > (pos_ray - 2) && astArray[l].ypos < (pos_ray + 2)){
+         cout << "BOOM THAT SHIT EXXPLODED   asteroid " << (l+1) << " deleted" << endl;
+         astArray[l].blownUp = true;
+         
+         //code to delete asteroid from the array
+         
+         int newCount = num_asteroids - 1;
+         Asteroids *tempArray = astArray;
+         
+         for (int z = l; z < newCount; z++){
+         tempArray[z] = astArray[z+1];
+         }
+         num_asteroids = newCount;
+         astArray = tempArray;
+         
+         }
+         }*/
         
-        for (int k = 0; k < num_planets; k++){
-            //calaculate attractive force between asteroid [i] and planet in question --> using formulas
-        }
-        
-        //sum all forces together and divide by the mass
-        //for int
         
     }
     
-    //rebound effect
-    
+    for (int v = 0; v < num_asteroids; v++){
+        cout << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        
+        /*
+         if (astArray[v].blownUp == true){
+         cout << "Asteroid " << (v+1) << " was blown up" << endl;
+         }
+         */
+    }
 }
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//Quick idea--> for the signs to be correct, if the x/y value of the opposing asteroid or planet is less than the other, then it should be negative and visa versa TOok care of this.
 
 
 
