@@ -259,23 +259,23 @@ int main(int argc, char *argv[]){
     }
     
     for (int i = 0; i < num_planets; i++){
-        if (i == 0 || i == 4){
+        if (i % 4 == 0){
             //left axis, x = 0
             planetArray[i].ypos = ydist(re);
             planetArray[i].xpos = 0;
         }
-        if (i == 1 || i == 5){
+        if (i % 4  == 1){
             //top border, y = 0
             planetArray[i].xpos = xdist(re);
             planetArray[i].ypos = 0;
             
         }
-        if (i == 2 || i == 6){
+        if (i % 4 == 2){
             //right border, x = width
             planetArray[i].ypos = ydist(re);
             planetArray[i].xpos = width;
         }
-        if (i == 3 || i == 7){
+        if (i % 4 == 3){
             //bottom border, y = height
             planetArray[i].xpos = xdist(re);
             planetArray[i].ypos = height;
@@ -302,6 +302,7 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     for (int t = 0; t < num_iterations; t++){
+        cout << "timecycle " << t+1 << endl;
         
         //cout << endl << "time step #" << (t+1) << endl;
         
@@ -360,25 +361,25 @@ int main(int argc, char *argv[]){
             }
         }
         //CODE FOR DELETING ASTEROIDS
-        /*
+        
          for (int l = 0; l < num_asteroids; l++){
-         if (astArray[l].ypos > (pos_ray - 2) && astArray[l].ypos < (pos_ray + 2)){
-         cout << "BOOM THAT SHIT EXXPLODED   asteroid " << (l+1) << " deleted" << endl;
-         astArray[l].blownUp = true;
-         
-         //code to delete asteroid from the array
-         
-         int newCount = num_asteroids - 1;
-         Asteroids *tempArray = astArray;
-         
-         for (int z = l; z < newCount; z++){
-         tempArray[z] = astArray[z+1];
+             if (astArray[l].ypos > (pos_ray - 2) && astArray[l].ypos < (pos_ray + 2)){
+             cout << "BOOM THAT SHIT EXXPLODED   asteroid " << (l+1) << " deleted" << endl;
+             astArray[l].blownUp = true;
+             
+             //code to delete asteroid from the array
+             
+             int newCount = num_asteroids - 1;
+             Asteroids *tempArray = astArray;
+             
+             for (int z = l; z < newCount; z++){
+                 tempArray[z] = astArray[z+1];
+             }
+             num_asteroids = newCount;
+             astArray = tempArray;
+             
+             }
          }
-         num_asteroids = newCount;
-         astArray = tempArray;
-         
-         }
-         }*/
         
         
     }
@@ -387,6 +388,7 @@ int main(int argc, char *argv[]){
     outFile.open ("out.txt");
     
     for (int v = 0; v < num_asteroids; v++){
+        cout << "NUM ASTEROIDS " << num_asteroids << endl;
         
         //string outStr = to_string(astArray[v].xpos) + " " + to_string(astArray[v].ypos) + " ";
         
@@ -401,6 +403,25 @@ int main(int argc, char *argv[]){
 }
 
 //Quick idea--> for the signs to be correct, if the x/y value of the opposing asteroid or planet is less than the other, then it should be negative and visa versa TOok care of this.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
