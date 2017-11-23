@@ -2,7 +2,6 @@
 //  asteroids.cpp
 //  Created by Hans von Clemm on 10/26/17.
 
-
 #include <iostream>
 #include <chrono>
 #include <random>
@@ -22,6 +21,8 @@ int ray_width = 4;
 double gravC = pow(6.674, -5);
 int m = 1000;
 int sdm = 50;
+double inf = 100000;
+//std::numeric_limits<double>::infinity();
 
 struct Asteroids{
     
@@ -70,7 +71,7 @@ void forceCalcA(int temp, int oppose, Asteroids *astArray){
         //cout << "slope: " << slope << endl;
         //cout << " ANGLE BEFORE TRUNCATION: " << atan(slope) << " radians " << endl;
         
-        if (slope > 1 || slope < -1){
+        if (slope > 1 || slope < -1 || slope > inf || slope < (-1*inf)){
             
             //cout << "SLOPE TRUNC # is " << trunc(slope) << endl;
             
@@ -140,7 +141,7 @@ void forceCalcP(int a, int p, Asteroids *astArray, Planets *planetArray){ //forc
     if (dist > 2){
         double slope = (astX - planetX) / (astY - planetY);
         
-        if (slope > 1 || slope < -1){
+        if (slope > 1 || slope < -1 || slope > inf || slope < (-1*inf)){
             slope = slope - trunc(slope); //UNCOMMENT THIS TO HAVE THE SLOPE BE TRUNCATED
             
         }
@@ -302,7 +303,7 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     for (int t = 0; t < num_iterations; t++){
-        cout << "timecycle " << t+1 << endl;
+        //cout << "timecycle " << t+1 << endl;
         
         //cout << endl << "time step #" << (t+1) << endl;
         
@@ -377,22 +378,21 @@ int main(int argc, char *argv[]){
              }
              num_asteroids = newCount;
              astArray = tempArray;
-             
+                 
              }
          }
-        
-        
     }
     
     ofstream outFile;
     outFile.open ("out.txt");
     
+    cout << "NUM ASTEROIDS " << num_asteroids << endl;
+
     for (int v = 0; v < num_asteroids; v++){
-        cout << "NUM ASTEROIDS " << num_asteroids << endl;
-        
         //string outStr = to_string(astArray[v].xpos) + " " + to_string(astArray[v].ypos) + " ";
         
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
         
         //outFile << outStr << endl;
     }
@@ -402,27 +402,4 @@ int main(int argc, char *argv[]){
     
 }
 
-//Quick idea--> for the signs to be correct, if the x/y value of the opposing asteroid or planet is less than the other, then it should be negative and visa versa TOok care of this.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+//Quick idea--> for the signs to be correct, if the x/y value of the opposing asteroid or planet is less than the other, then it should be negative and visa versa took care of this.
