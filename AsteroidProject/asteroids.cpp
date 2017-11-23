@@ -21,8 +21,7 @@ int ray_width = 4;
 double gravC = pow(6.674, -5);
 int m = 1000;
 int sdm = 50;
-double inf = 100000;
-//std::numeric_limits<double>::infinity();
+double inf = std::numeric_limits<double>::infinity();
 
 struct Asteroids{
     
@@ -71,7 +70,11 @@ void forceCalcA(int temp, int oppose, Asteroids *astArray){
         //cout << "slope: " << slope << endl;
         //cout << " ANGLE BEFORE TRUNCATION: " << atan(slope) << " radians " << endl;
         
-        if (slope > 1 || slope < -1 || slope > inf || slope < (-1*inf)){
+        if (isinf(slope)){
+            cout << "breaking out of function due to INFINITE SLOPE" << endl;
+            return;
+        }
+        if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
             
             //cout << "SLOPE TRUNC # is " << trunc(slope) << endl;
             
@@ -91,10 +94,10 @@ void forceCalcA(int temp, int oppose, Asteroids *astArray){
     
     //double fx =
     double fx = ((gravC * tempM * opposeM) / dist) * cos(angle);
-    
-    //cout << fixed << setprecision(12) << fx << endl;
-    
     double fy = ((gravC * tempM * opposeM) / dist) * sin(angle);
+    
+    //cout << fixed << setprecision(12) << "fx: " << fx << " fy: " << fy << endl;
+    
     
     if (tempX < opposeX){// then the force should be positive
         if (fx < 0){
@@ -140,8 +143,9 @@ void forceCalcP(int a, int p, Asteroids *astArray, Planets *planetArray){ //forc
     
     if (dist > 2){
         double slope = (astX - planetX) / (astY - planetY);
+        //cout << "Slope from planet to asteroid " << slope << endl;
         
-        if (slope > 1 || slope < -1 || slope > inf || slope < (-1*inf)){
+        if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
             slope = slope - trunc(slope); //UNCOMMENT THIS TO HAVE THE SLOPE BE TRUNCATED
             
         }
@@ -189,6 +193,12 @@ void forceCalcP(int a, int p, Asteroids *astArray, Planets *planetArray){ //forc
 }
 
 void movement(int index, double sumFX, double sumFY, Asteroids *astArray){
+    
+    if (isnan(astArray[index].xvel)){
+        cout << "Not a Number found at " << index+1 << " sumFX is " << sumFX << " sumFY is " << sumFY << endl;
+        //exit(0);
+    }
+        
     //this will be calculating the acceleration AT EACH POINT IN TIME
     double accelX = sumFX / astArray[index].mass;
     //cout << "accelX = " << accelX << endl;
@@ -305,7 +315,7 @@ int main(int argc, char *argv[]){
     for (int t = 0; t < num_iterations; t++){
         //cout << "timecycle " << t+1 << endl;
         
-        //cout << endl << "time step #" << (t+1) << endl;
+        cout << endl << "time step #" << (t+1) << endl;
         
         //calculate in each time stamp
         for (int i = 0; i < num_asteroids; i++){
