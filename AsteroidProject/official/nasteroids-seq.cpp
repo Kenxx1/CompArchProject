@@ -248,7 +248,7 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     //Calculation section
-    for (int t = 0; t < num_iterations; ++t){
+    for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
         for (int c = 0; c < num_asteroids; c++){

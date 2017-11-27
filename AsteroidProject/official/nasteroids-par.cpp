@@ -251,7 +251,7 @@ int main(int argc, char *argv[]){
     
     //Calculation section
 
-    for (int t = 0; t < num_iterations; ++t){
+    for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
         for (int c = 0; c < num_asteroids; c++){
@@ -267,7 +267,7 @@ int main(int argc, char *argv[]){
                 astForceCalc(i, o, astArray);
             }
         }
-#pragma omp parallel for collapse(2)
+//#pragma omp parallel for collapse(2) --> can't do this cause it breaks
         for (int i = 0; i < num_asteroids; i++){
             //Compare asteroids with all planets
             for (int p = 0; p < num_planets; p++){
