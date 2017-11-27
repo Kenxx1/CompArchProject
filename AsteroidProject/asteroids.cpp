@@ -93,8 +93,8 @@ void forceCalcA(int temp, int oppose, Asteroids *astArray){
     
     
     //double fx =
-    double fx = ((gravC * tempM * opposeM) / dist) * cos(angle);
-    double fy = ((gravC * tempM * opposeM) / dist) * sin(angle);
+    double fx = ((gravC * tempM * opposeM) / (dist*dist)) * cos(angle);
+    double fy = ((gravC * tempM * opposeM) / (dist*dist)) * sin(angle);
     
     //cout << fixed << setprecision(12) << "fx: " << fx << " fy: " << fy << endl;
     
@@ -241,7 +241,7 @@ int main(int argc, char *argv[]){
     ofstream initFile;
     initFile.open ("init_conf.txt");
     
-    initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(1) << pos_ray << " " << seed << endl;
+    initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(3) << pos_ray << " " << seed << endl;
     
     
     Asteroids * astArray = new Asteroids[num_asteroids];
@@ -315,7 +315,7 @@ int main(int argc, char *argv[]){
     for (int t = 0; t < num_iterations; t++){
         //cout << "timecycle " << t+1 << endl;
         
-        cout << endl << "time step #" << (t+1) << endl;
+        //cout << endl << "time step #" << (t+1) << endl;
         
         //calculate in each time stamp
         for (int i = 0; i < num_asteroids; i++){
