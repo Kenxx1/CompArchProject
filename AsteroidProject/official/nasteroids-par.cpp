@@ -2,7 +2,7 @@
 //  nasteroids-seq.cpp
 //  Created by Hans von Clemm on 11/27/17.
 //
-// To run in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp
+// To run in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp -o par
 
 
 #include <iostream>
@@ -58,6 +58,9 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
         slope = slope - trunc(slope);
     }
+    if (isnan(slope)){
+        slope = (astArray[i].ypos - astArray[o].ypos) / (astArray[i].xpos - astArray[o].xpos);
+    }
     
     angle = atan(slope);
     double fx = ((gravC * astArray[o].mass * astArray[i].mass) / (dist*dist)) * cos(angle);
@@ -87,6 +90,7 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
     double dist = sqrt(pow((astArray[i].xpos - planetArray[p].xpos), 2) + pow((astArray[i].ypos - planetArray[p].ypos), 2));
     
     slope = (astArray[i].ypos - planetArray[p].ypos) / (astArray[i].xpos - planetArray[p].xpos);
+
     if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
         slope = slope - trunc(slope);
     }
@@ -100,6 +104,15 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
         fx = 200;
     if (fy > 200)
         fy = 200;
+    
+    if (isnan(fx)){
+        cout << "FLAG1" << endl;
+        fx = 0;
+    }
+    if (isnan(fy)){
+        fy = 0;
+        cout << "F:AAG" << endl;
+    }
     
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
@@ -250,16 +263,17 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     //Calculation section
-
     for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
+#pragma omp for
         for (int c = 0; c < num_asteroids; c++){
             astArray[c].fxVect.clear();
             astArray[c].fyVect.clear();
         }
         
         //Parse through asteroids
+#pragma omp for
         for (int i = 0; i < num_asteroids; i++){
             
             //Compare asteroids (i) with all subsequent asteroids (o)
@@ -267,7 +281,8 @@ int main(int argc, char *argv[]){
                 astForceCalc(i, o, astArray);
             }
         }
-//#pragma omp parallel for collapse(2) --> can't do this cause it breaks
+//#pragma omp parallel for collapse(2) //--> can't do this cause it breaks
+#pragma omp for
         for (int i = 0; i < num_asteroids; i++){
             //Compare asteroids with all planets
             for (int p = 0; p < num_planets; p++){
@@ -276,6 +291,7 @@ int main(int argc, char *argv[]){
         }
         
         //Calculate movement
+#pragma omp parallel for
         for (int m = 0; m < num_asteroids; m++){
             movement(m, astArray);
             rebound(m, astArray);
@@ -291,6 +307,12 @@ int main(int argc, char *argv[]){
                 }
                 num_asteroids = newCount;
                 astArray = tempArray;
+            }
+        }
+        for (int b = 0;  b < num_asteroids; b++){
+            if (isnan(astArray[b].xpos)){
+                cout << " Broke at " << b << endl;
+                break;
             }
         }
     }
