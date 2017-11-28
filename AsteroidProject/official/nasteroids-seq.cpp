@@ -68,6 +68,9 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     if (fy > 200)
         fy = 200;
     
+    if (dist < 2)
+        fx, fy = 0;
+    
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
     
@@ -245,7 +248,7 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     //Calculation section
-    for (int t = 0; t < num_iterations; ++t){
+    for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
         for (int c = 0; c < num_asteroids; c++){
@@ -298,4 +301,3 @@ int main(int argc, char *argv[]){
     }
     outFile.close();
 }
-

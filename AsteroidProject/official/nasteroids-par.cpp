@@ -69,6 +69,9 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     if (fy > 200)
         fy = 200;
     
+    if (dist < 2)
+        fx, fy = 0;
+    
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
     
@@ -185,6 +188,7 @@ int main(int argc, char *argv[]){
     Planets * planetArray = new Planets[num_planets];
     
     //Assign random values to all asteroids -------can parallilze
+#pragma omp for
     for (int i = 0; i < num_asteroids; i++){
         astArray[i].xpos = xdist(re);
         astArray[i].ypos = ydist(re);
@@ -194,6 +198,7 @@ int main(int argc, char *argv[]){
     }
     
     //Assign random values for the planets   -------can parallelize
+#pragma omp for
     for (int i = 0; i < num_planets; i++){
         if (i % 4 == 0){
             //left axis, x = 0
@@ -225,13 +230,13 @@ int main(int argc, char *argv[]){
     initFile.open ("init_conf.txt");
     initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(3) << pos_ray << " " << seed << endl;
     
-    //Write asteroid info to initFile  -------can parallelize
+    //Write asteroid info to initFile
     for (int i = 0; i < num_asteroids; i++){
         //cout << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
         initFile << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
     }
     
-    //Write planet info to initFile -----------can parallelize
+    //Write planet info to initFile
     for (int i = 0; i < num_planets; i++){
         //cout << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
         initFile << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
@@ -245,8 +250,8 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     //Calculation section
-    //#pragma omp for
-    for (int t = 0; t < num_iterations; ++t){
+
+    for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
         for (int c = 0; c < num_asteroids; c++){
@@ -261,7 +266,9 @@ int main(int argc, char *argv[]){
             for (int o = i+1; o < num_asteroids; o++){
                 astForceCalc(i, o, astArray);
             }
-            
+        }
+//#pragma omp parallel for collapse(2) --> can't do this cause it breaks
+        for (int i = 0; i < num_asteroids; i++){
             //Compare asteroids with all planets
             for (int p = 0; p < num_planets; p++){
                 planetForceCalc(i, p, astArray, planetArray);
