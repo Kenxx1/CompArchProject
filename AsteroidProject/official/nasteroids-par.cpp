@@ -188,6 +188,8 @@ int main(int argc, char *argv[]){
     Planets * planetArray = new Planets[num_planets];
     
     //Assign random values to all asteroids -------can parallilze
+#pragma omp parallel
+{
 #pragma omp for
     for (int i = 0; i < num_asteroids; i++){
         astArray[i].xpos = xdist(re);
@@ -196,10 +198,13 @@ int main(int argc, char *argv[]){
         astArray[i].xvel = 0;
         astArray[i].yvel = 0;
     }
-    
+}    
     //Assign random values for the planets   -------can parallelize
-#pragma omp for
-    for (int i = 0; i < num_planets; i++){
+#pragma omp parallel
+{
+    #pragma omp for
+        for (int i = 0; i < num_planets; i++)
+        {
         if (i % 4 == 0){
             //left axis, x = 0
             planetArray[i].ypos = ydist(re);
@@ -223,8 +228,8 @@ int main(int argc, char *argv[]){
         }
         //double planetMass =
         planetArray[i].mass = mdist(re) * 10;
-    }
-    
+         }
+}  
     //Create initFile and write initial conditions
     ofstream initFile;
     initFile.open ("init_conf.txt");
