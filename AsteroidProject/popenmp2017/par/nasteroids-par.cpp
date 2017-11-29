@@ -1,5 +1,5 @@
 //
-//  nasteroids-seq.cpp
+//  nasteroids-par.cpp
 //  Created by Hans von Clemm on 11/27/17.
 //TO RUN in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp -o par
 //
@@ -163,6 +163,8 @@ void movement(int i, Asteroids *astArray){
 
 int main(int argc, char *argv[]){
     
+    //omp_set_num_threads(16);
+    
     //Error arguments for nasteroids-seq
     if (argc != 6){
         cout << "nasteroids-seq: Wrong arguments." << endl;
@@ -203,7 +205,7 @@ int main(int argc, char *argv[]){
     Asteroids * astArray = new Asteroids[num_asteroids];
     Planets * planetArray = new Planets[num_planets];
     
-    //Assign random values to all asteroids -------can parallilze
+    //Assign random values to all asteroids
     for (int i = 0; i < num_asteroids; i++){
         astArray[i].xpos = xdist(re);
         astArray[i].ypos = ydist(re);
@@ -212,7 +214,7 @@ int main(int argc, char *argv[]){
         astArray[i].yvel = 0;
     }
     
-    //Assign random values for the planets   -------can parallelize
+    //Assign random values for the planets
     for (int i = 0; i < num_planets; i++){
         if (i % 4 == 0){
             //left axis, x = 0
@@ -245,14 +247,14 @@ int main(int argc, char *argv[]){
     initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(3) << pos_ray << " " << seed << endl;
     
     //Write asteroid info to initFile  -------can parallelize
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int i = 0; i < num_asteroids; i++){
         //cout << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
         initFile << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
     }
     
     //Write planet info to initFile -----------can parallelize
-#pragma omp parallel for
+//#pragma omp parallel for
     for (int i = 0; i < num_planets; i++){
         //cout << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
         initFile << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
@@ -281,13 +283,13 @@ int main(int argc, char *argv[]){
         for (int i = 0; i < num_asteroids; i++){
             
             //Compare asteroids (i) with all subsequent asteroids (o)
-
             for (int o = i+1; o < num_asteroids; o++){
                 astForceCalc(i, o, astArray);
             }
 
             
             //Compare asteroids with all planets
+#pragma omp for
             for (int p = 0; p < num_planets; p++){
                 planetForceCalc(i, p, astArray, planetArray);
             }
@@ -298,7 +300,11 @@ int main(int argc, char *argv[]){
 #pragma omp parallel for
         for (int m = 0; m < num_asteroids; m++){
             movement(m, astArray);
-            rebound(m, astArray);
+        }
+        
+#pragma omp parallell for
+        for (int s = 0; s < num_asteroids; s++){
+            rebound(s, astArray);
         }
         
         //Check if asteroid is in the field of the ray
