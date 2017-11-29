@@ -163,6 +163,8 @@ void movement(int i, Asteroids *astArray){
 
 int main(int argc, char *argv[]){
     
+    omp_set_num_threads(1)
+    
     //Error arguments for nasteroids-seq
     if (argc != 6){
         cout << "nasteroids-seq: Wrong arguments." << endl;
