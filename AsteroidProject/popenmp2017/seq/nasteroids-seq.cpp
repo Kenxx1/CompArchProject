@@ -72,8 +72,10 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     if (fy > 200)
         fy = 200;
     
-    if (dist < 2)
-        fx, fy = 0;
+    if (dist < 2){
+        fx = 0;
+        fy = 0;
+    }
     
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
@@ -103,17 +105,6 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
         fx = 200;
     if (fy > 200)
         fy = 200;
-    
-    if (isnan(fx) || isnan(fy)){
-        cout << "isnan at " << i << " with planet " << p << endl;
-        //PRINT ALL INFO WE KNOW
-        cout << "slope: " << slope << " dist: " << dist << " fx: " << fx << " fy: " << endl;
-        cout << "Asteroid " << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].xvel << " " << astArray[i].yvel << endl;
-        cout << "Planet " << planetArray[p].xpos << " " << planetArray[p].ypos << " " << planetArray[p].mass << endl;
-        fx = 0;
-        fy = 0;
-        exit(-1);
-    }
     
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
@@ -163,7 +154,6 @@ void movement(int i, Asteroids *astArray){
 
 int main(int argc, char *argv[]){
     
-    omp_set_num_threads(1)
     
     //Error arguments for nasteroids-seq
     if (argc != 6){
