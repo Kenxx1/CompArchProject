@@ -313,7 +313,10 @@ int main(int argc, char *argv[]){
     
     for (int v = 0; v < num_asteroids; v++){
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
-        cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        //cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
     }
+    cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
     outFile.close();
+    cout << "NUm asteroids " << num_asteroids << endl;
+
 }

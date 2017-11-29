@@ -1,7 +1,7 @@
 //
 //  nasteroids-seq.cpp
 //  Created by Hans von Clemm on 11/27/17.
-//TO RUN in Terminal (mac) g++ -std=c++14 nasteroids-seq.cpp -o seq
+//TO RUN in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp -o par
 //
 
 
@@ -83,6 +83,7 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     astArray[o].fyVect.push_back(-1*fy);
 }
 
+
 void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
     
     double angle;
@@ -94,6 +95,9 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
     if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
         slope = slope - trunc(slope);
     }
+    if (isnan(slope)){
+        slope = (astArray[i].ypos - planetArray[p].ypos) / (astArray[i].xpos - planetArray[p].xpos);
+    }
     
     angle = atan(slope);
     double fx = ((gravC * planetArray[p].mass * astArray[i].mass) / (dist*dist)) * cos(angle);
@@ -104,17 +108,6 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
         fx = 200;
     if (fy > 200)
         fy = 200;
-    
-    if (isnan(fx) || isnan(fy)){
-        cout << "isnan at " << i << " with planet " << p << endl;
-        //PRINT ALL INFO WE KNOW
-        cout << "slope: " << slope << " dist: " << dist << " fx: " << fx << " fy: " << endl;
-        cout << "Asteroid " << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].xvel << " " << astArray[i].yvel << endl;
-        cout << "Planet " << planetArray[p].xpos << " " << planetArray[p].ypos << " " << planetArray[p].mass << endl;
-        fx = 0;
-        fy = 0;
-        exit(-1);
-    }
     
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
@@ -147,10 +140,15 @@ void movement(int i, Asteroids *astArray){
     double sigfx = 0;
     double sigfy = 0;
     
-    for (auto& n : astArray[i].fxVect)
-        sigfx += n;
-    for (auto& n : astArray[i].fyVect)
-        sigfy += n;
+#pragma omp parallel for reduction(+:sigfx)
+    for (int v = 0; v < astArray[i].fxVect.size(); v++){
+        sigfx += astArray[i].fxVect[v];
+    }
+#pragma omp parallel for reduction(+:sigfy)
+    for (int v = 0; v < astArray[i].fyVect.size(); v++){
+        sigfy += astArray[i].fxVect[v];
+    }
+    
     
     double accelX = sigfx / astArray[i].mass;
     double accelY = sigfy / astArray[i].mass;
@@ -161,7 +159,7 @@ void movement(int i, Asteroids *astArray){
     astArray[i].xpos = astArray[i].xpos + (astArray[i].xvel * dt);
     astArray[i].ypos = astArray[i].ypos + (astArray[i].yvel * dt);
 }
-#pragma omp
+
 int main(int argc, char *argv[]){
     
     //Error arguments for nasteroids-seq
@@ -246,12 +244,14 @@ int main(int argc, char *argv[]){
     initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(3) << pos_ray << " " << seed << endl;
     
     //Write asteroid info to initFile  -------can parallelize
+#pragma omp parallel for
     for (int i = 0; i < num_asteroids; i++){
         //cout << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
         initFile << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
     }
     
     //Write planet info to initFile -----------can parallelize
+#pragma omp parallel for
     for (int i = 0; i < num_planets; i++){
         //cout << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
         initFile << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
@@ -268,26 +268,33 @@ int main(int argc, char *argv[]){
     for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
+#pragma omp parallel for
         for (int c = 0; c < num_asteroids; c++){
             astArray[c].fxVect.clear();
             astArray[c].fyVect.clear();
         }
+
         
         //Parse through asteroids
+        
         for (int i = 0; i < num_asteroids; i++){
             
             //Compare asteroids (i) with all subsequent asteroids (o)
+
             for (int o = i+1; o < num_asteroids; o++){
                 astForceCalc(i, o, astArray);
             }
+
             
             //Compare asteroids with all planets
             for (int p = 0; p < num_planets; p++){
                 planetForceCalc(i, p, astArray, planetArray);
             }
         }
+    
         
         //Calculate movement
+#pragma omp parallel for
         for (int m = 0; m < num_asteroids; m++){
             movement(m, astArray);
             rebound(m, astArray);
@@ -312,10 +319,13 @@ int main(int argc, char *argv[]){
     ofstream outFile;
     outFile.open ("out.txt");
     
+#pragma omp parallel for
     for (int v = 0; v < num_asteroids; v++){
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
-        cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        //cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
     }
+    cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
+    cout << "NUm asteroids " << num_asteroids << endl;
     outFile.close();
 }
 
