@@ -4,4 +4,4 @@ CC = g++
 CFLAGS  = -std=c++14 -Wall -Wextra -Wno-deprecated -Werror -pedantic -pedantic-errors
 
 all:
-	g++ nasteroids-seq.cpp -o nasteroids-seq
+	g++ nasteroids-par.cpp -o nasteroids-par -fopenmp
