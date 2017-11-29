@@ -1,7 +1,7 @@
 # the compiler: gcc for C program, define as g++ for C++
 CC = g++
 # compiler flags: 
-CFLAGS  = -std=c++14 -Wall -Wextra -Wno-deprecated -Werror -pedantic -pedantic-errors
+CFLAGS  = -std=c++14 -Wall -Wextra -Wno-deprecated -Werror -pedantic -pedantic-errors -O3
 
 all:
 	g++ nasteroids-seq.cpp -o nasteroids-seq

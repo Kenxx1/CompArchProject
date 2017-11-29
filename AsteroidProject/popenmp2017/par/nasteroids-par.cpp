@@ -1,6 +1,8 @@
 //
 //  nasteroids-par.cpp
 //  Created by Hans von Clemm on 11/27/17.
+// Group# 11
+// Hans von Clemm - 100377951, John Fitzgerald - 100377174, Kenneth Maher - 100377812, Cvetanka Jovanovska - 100326911
 //TO RUN in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp -o par
 //
 
@@ -163,7 +165,9 @@ void movement(int i, Asteroids *astArray){
 
 int main(int argc, char *argv[]){
     
-    //omp_set_num_threads(16);
+    //omp_set_num_threads(8);
+    
+    //int THREADS = 8;
     
     //Error arguments for nasteroids-seq
     if (argc != 6){
@@ -283,6 +287,7 @@ int main(int argc, char *argv[]){
         for (int i = 0; i < num_asteroids; i++){
             
             //Compare asteroids (i) with all subsequent asteroids (o)
+#pragma omp for
             for (int o = i+1; o < num_asteroids; o++){
                 astForceCalc(i, o, astArray);
             }
@@ -302,7 +307,7 @@ int main(int argc, char *argv[]){
             movement(m, astArray);
         }
         
-#pragma omp parallell for
+#pragma omp parallel for
         for (int s = 0; s < num_asteroids; s++){
             rebound(s, astArray);
         }
@@ -331,8 +336,8 @@ int main(int argc, char *argv[]){
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
         //cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
     }
-    cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
-    cout << "NUm asteroids " << num_asteroids << endl;
+    //cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
+    //cout << "NUm asteroids " << num_asteroids << endl;
     outFile.close();
 }
 

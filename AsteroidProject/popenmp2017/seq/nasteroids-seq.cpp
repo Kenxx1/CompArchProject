@@ -1,7 +1,9 @@
 //
 //  nasteroids-seq.cpp
 //  Created by Hans von Clemm on 11/27/17.
-//TO RUN in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp -o par
+// Group# 11
+// Hans von Clemm - 100377951, John Fitzgerald - 100377174, Kenneth Maher - 100377812, Cvetanka Jovanovska - 100326911
+//TO RUN in Terminal (mac) g++ -std=c++14 nasteroids-par.cpp  -o seq
 //
 
 
@@ -323,8 +325,8 @@ int main(int argc, char *argv[]){
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
         //cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
     }
-    cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
-    cout << "NUm asteroids " << num_asteroids << endl;
+    //cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
+    //cout << "NUm asteroids " << num_asteroids << endl;
     outFile.close();
 }
 
