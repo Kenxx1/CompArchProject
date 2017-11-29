@@ -144,9 +144,10 @@ void movement(int i, Asteroids *astArray){
     for (int v = 0; v < astArray[i].fxVect.size(); v++){
         sigfx += astArray[i].fxVect[v];
     }
+    
 #pragma omp parallel for reduction(+:sigfy)
     for (int v = 0; v < astArray[i].fyVect.size(); v++){
-        sigfy += astArray[i].fxVect[v];
+        sigfy += astArray[i].fyVect[v];
     }
     
     
