@@ -1,8 +1,8 @@
 //
 //  nasteroids-seq.cpp
 //  Created by Hans von Clemm on 11/27/17.
+//TO RUN in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp -o par
 //
-// To run in Terminal (mac) g++-7 -std=c++14 nasteroids-par.cpp -fopenmp
 
 
 #include <iostream>
@@ -55,14 +55,18 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     double dist = sqrt(pow((astArray[i].xpos - astArray[o].xpos), 2) + pow((astArray[i].ypos - astArray[o].ypos), 2));
     
     slope = (astArray[i].ypos - astArray[o].ypos) / (astArray[i].xpos - astArray[o].xpos);
+    
+    
     if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
         slope = slope - trunc(slope);
+    }
+    if (isnan(slope)){
+        slope = (astArray[i].ypos - astArray[o].ypos) / (astArray[i].xpos - astArray[o].xpos);
     }
     
     angle = atan(slope);
     double fx = ((gravC * astArray[o].mass * astArray[i].mass) / (dist*dist)) * cos(angle);
     double fy = ((gravC * astArray[o].mass * astArray[i].mass) / (dist*dist)) * sin(angle);
-    //calculate accel due to f and y forces ---------------------- TO efficiently parallelize this, you want to do all of it at the end of each time cycle in a large loop
     
     if (fx > 200)
         fx = 200;
@@ -75,9 +79,10 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
     
-    astArray[o].fxVect.push_back(-fx);
-    astArray[o].fyVect.push_back(-fy);
+    astArray[o].fxVect.push_back(-1*fx);
+    astArray[o].fyVect.push_back(-1*fy);
 }
+
 
 void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
     
@@ -90,11 +95,14 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
     if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
         slope = slope - trunc(slope);
     }
+    if (isnan(slope)){
+        slope = (astArray[i].ypos - planetArray[p].ypos) / (astArray[i].xpos - planetArray[p].xpos);
+    }
     
     angle = atan(slope);
     double fx = ((gravC * planetArray[p].mass * astArray[i].mass) / (dist*dist)) * cos(angle);
     double fy = ((gravC * planetArray[p].mass * astArray[i].mass) / (dist*dist)) * sin(angle);
-    //calculate accel due to f and y forces ---------------------- TO efficiently parallelize this, you want to do all of it at the end of each time cycle in a large loop
+    //calculate accel due to x and y forces ---------------------- TO efficiently parallelize this, you want to do all of it at the end of each time cycle in a large loop
     
     if (fx > 200)
         fx = 200;
@@ -132,10 +140,15 @@ void movement(int i, Asteroids *astArray){
     double sigfx = 0;
     double sigfy = 0;
     
-    for (auto& n : astArray[i].fxVect)
-        sigfx += n;
-    for (auto& n : astArray[i].fyVect)
-        sigfy += n;
+#pragma omp parallel for reduction(+:sigfx)
+    for (int v = 0; v < astArray[i].fxVect.size(); v++){
+        sigfx += astArray[i].fxVect[v];
+    }
+#pragma omp parallel for reduction(+:sigfy)
+    for (int v = 0; v < astArray[i].fyVect.size(); v++){
+        sigfy += astArray[i].fxVect[v];
+    }
+    
     
     double accelX = sigfx / astArray[i].mass;
     double accelY = sigfy / astArray[i].mass;
@@ -163,6 +176,7 @@ int main(int argc, char *argv[]){
     int num_planets = stoi(argv[3]);
     double pos_ray = stod(argv[4]);
     int seed = stoi(argv[5]);
+    //cout << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(1) << pos_ray << " " << seed << endl;
     
     //Execution Setup
     cout << "Execution setup" << endl << endl;
@@ -173,6 +187,7 @@ int main(int argc, char *argv[]){
     cout << "Number of bodies: " << num_asteroids << endl;
     cout << "Gravity: " << gravC << endl;
     cout << "Delta time: " << fixed << setprecision(1) << dt << endl;
+    cout << "Number of steps: " << num_iterations << endl;
     cout << "Min. distance: " << dmin << endl;
     cout << "Width: " << width << endl;
     cout << "Height: " << height << endl << endl;
@@ -188,9 +203,6 @@ int main(int argc, char *argv[]){
     Planets * planetArray = new Planets[num_planets];
     
     //Assign random values to all asteroids -------can parallilze
-#pragma omp parallel
-{
-#pragma omp for
     for (int i = 0; i < num_asteroids; i++){
         astArray[i].xpos = xdist(re);
         astArray[i].ypos = ydist(re);
@@ -198,13 +210,9 @@ int main(int argc, char *argv[]){
         astArray[i].xvel = 0;
         astArray[i].yvel = 0;
     }
-}    
+    
     //Assign random values for the planets   -------can parallelize
-#pragma omp parallel
-{
-    #pragma omp for
-        for (int i = 0; i < num_planets; i++)
-        {
+    for (int i = 0; i < num_planets; i++){
         if (i % 4 == 0){
             //left axis, x = 0
             planetArray[i].ypos = ydist(re);
@@ -228,20 +236,22 @@ int main(int argc, char *argv[]){
         }
         //double planetMass =
         planetArray[i].mass = mdist(re) * 10;
-         }
-}  
+    }
+    
     //Create initFile and write initial conditions
     ofstream initFile;
     initFile.open ("init_conf.txt");
     initFile << num_asteroids << " " << num_iterations << " " << num_planets << " " << fixed << setprecision(3) << pos_ray << " " << seed << endl;
     
-    //Write asteroid info to initFile
+    //Write asteroid info to initFile  -------can parallelize
+#pragma omp parallel for
     for (int i = 0; i < num_asteroids; i++){
         //cout << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
         initFile << fixed << setprecision(3) << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].mass << endl;
     }
     
-    //Write planet info to initFile
+    //Write planet info to initFile -----------can parallelize
+#pragma omp parallel for
     for (int i = 0; i < num_planets; i++){
         //cout << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
         initFile << fixed << setprecision(3) << planetArray[i].xpos << " " << planetArray[i].ypos << " " << planetArray[i].mass << endl;
@@ -255,42 +265,47 @@ int main(int argc, char *argv[]){
     initFile.close();
     
     //Calculation section
-
     for (int t = 0; t < num_iterations; t++){
         
         //Clear fx values for past iteration
+#pragma omp parallel for
         for (int c = 0; c < num_asteroids; c++){
             astArray[c].fxVect.clear();
             astArray[c].fyVect.clear();
         }
+
         
         //Parse through asteroids
+        
         for (int i = 0; i < num_asteroids; i++){
             
             //Compare asteroids (i) with all subsequent asteroids (o)
+
             for (int o = i+1; o < num_asteroids; o++){
                 astForceCalc(i, o, astArray);
             }
-        }
-//#pragma omp parallel for collapse(2) --> can't do this cause it breaks
-        for (int i = 0; i < num_asteroids; i++){
+
+            
             //Compare asteroids with all planets
             for (int p = 0; p < num_planets; p++){
                 planetForceCalc(i, p, astArray, planetArray);
             }
         }
+    
         
         //Calculate movement
+#pragma omp parallel for
         for (int m = 0; m < num_asteroids; m++){
             movement(m, astArray);
             rebound(m, astArray);
         }
         
-        //Check if asteroid is in the field of the ray and delete if it should explode
+        //Check if asteroid is in the field of the ray
         for (int r = 0; r < num_asteroids; r++){
             if (astArray[r].ypos > (pos_ray - 2) && astArray[r].ypos < (pos_ray + 2)){
                 int newCount = num_asteroids - 1;
                 Asteroids *tempArray = astArray;
+                //cout << "asteroid at " << r << " exploded" << endl;
                 for (int z = r; z < newCount; z++){
                     tempArray[z] = astArray[z+1];
                 }
@@ -304,9 +319,13 @@ int main(int argc, char *argv[]){
     ofstream outFile;
     outFile.open ("out.txt");
     
+#pragma omp parallel for
     for (int v = 0; v < num_asteroids; v++){
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
-        cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        //cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
     }
+    cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
+    cout << "NUm asteroids " << num_asteroids << endl;
     outFile.close();
 }
+

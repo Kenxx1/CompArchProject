@@ -1,6 +1,7 @@
 //
 //  nasteroids-seq.cpp
 //  Created by Hans von Clemm on 11/27/17.
+//TO RUN in Terminal (mac) g++ -std=c++14 nasteroids-seq.cpp -o seq
 //
 
 
@@ -46,7 +47,6 @@ struct Planets{
     double mass;
 };
 
-//
 void astForceCalc(int i, int o, Asteroids* astArray){
     double angle;
     double slope;
@@ -54,14 +54,18 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     double dist = sqrt(pow((astArray[i].xpos - astArray[o].xpos), 2) + pow((astArray[i].ypos - astArray[o].ypos), 2));
     
     slope = (astArray[i].ypos - astArray[o].ypos) / (astArray[i].xpos - astArray[o].xpos);
+    
+    
     if (slope > 1 || slope < -1 || !isinf(trunc(slope))){
         slope = slope - trunc(slope);
+    }
+    if (isnan(slope)){
+        slope = (astArray[i].ypos - astArray[o].ypos) / (astArray[i].xpos - astArray[o].xpos);
     }
     
     angle = atan(slope);
     double fx = ((gravC * astArray[o].mass * astArray[i].mass) / (dist*dist)) * cos(angle);
     double fy = ((gravC * astArray[o].mass * astArray[i].mass) / (dist*dist)) * sin(angle);
-    //calculate accel due to f and y forces ---------------------- TO efficiently parallelize this, you want to do all of it at the end of each time cycle in a large loop
     
     if (fx > 200)
         fx = 200;
@@ -74,8 +78,8 @@ void astForceCalc(int i, int o, Asteroids* astArray){
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
     
-    astArray[o].fxVect.push_back(-fx);
-    astArray[o].fyVect.push_back(-fy);
+    astArray[o].fxVect.push_back(-1*fx);
+    astArray[o].fyVect.push_back(-1*fy);
 }
 
 void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
@@ -93,12 +97,23 @@ void planetForceCalc(int i, int p, Asteroids *astArray, Planets *planetArray){
     angle = atan(slope);
     double fx = ((gravC * planetArray[p].mass * astArray[i].mass) / (dist*dist)) * cos(angle);
     double fy = ((gravC * planetArray[p].mass * astArray[i].mass) / (dist*dist)) * sin(angle);
-    //calculate accel due to f and y forces ---------------------- TO efficiently parallelize this, you want to do all of it at the end of each time cycle in a large loop
+    //calculate accel due to x and y forces ---------------------- TO efficiently parallelize this, you want to do all of it at the end of each time cycle in a large loop
     
     if (fx > 200)
         fx = 200;
     if (fy > 200)
         fy = 200;
+    
+    if (isnan(fx) || isnan(fy)){
+        cout << "isnan at " << i << " with planet " << p << endl;
+        //PRINT ALL INFO WE KNOW
+        cout << "slope: " << slope << " dist: " << dist << " fx: " << fx << " fy: " << endl;
+        cout << "Asteroid " << astArray[i].xpos << " " << astArray[i].ypos << " " << astArray[i].xvel << " " << astArray[i].yvel << endl;
+        cout << "Planet " << planetArray[p].xpos << " " << planetArray[p].ypos << " " << planetArray[p].mass << endl;
+        fx = 0;
+        fy = 0;
+        exit(-1);
+    }
     
     astArray[i].fxVect.push_back(fx);
     astArray[i].fyVect.push_back(fy);
@@ -173,6 +188,7 @@ int main(int argc, char *argv[]){
     cout << "Number of bodies: " << num_asteroids << endl;
     cout << "Gravity: " << gravC << endl;
     cout << "Delta time: " << fixed << setprecision(1) << dt << endl;
+    cout << "Number of steps: " << num_iterations << endl;
     cout << "Min. distance: " << dmin << endl;
     cout << "Width: " << width << endl;
     cout << "Height: " << height << endl << endl;
@@ -297,7 +313,10 @@ int main(int argc, char *argv[]){
     
     for (int v = 0; v < num_asteroids; v++){
         outFile << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
-        cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
+        //cout << fixed << setprecision(3) << astArray[v].xpos << " " << astArray[v].ypos << " " << astArray[v].xvel << " " << astArray[v].yvel << " " << astArray[v].mass << endl;
     }
+    cout << fixed << setprecision(3) << astArray[num_asteroids-1].xpos << " " << astArray[num_asteroids-1].ypos << " " << astArray[num_asteroids-1].xvel << " " << astArray[num_asteroids-1].yvel << " " << astArray[num_asteroids-1].mass << endl;
     outFile.close();
+    cout << "NUm asteroids " << num_asteroids << endl;
+
 }
